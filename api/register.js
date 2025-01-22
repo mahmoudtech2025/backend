@@ -1,10 +1,7 @@
 import mongoose from "mongoose";
 
-// تضمين MONGO_URI مباشرة في الكود
-const MONGO_URI = "mongodb+srv://mahmoudtech2025:mahmoud2025mahmoud@cluster0.9ghor.mongodb.net/?retryWrites=true&w=majority";
-
 // الاتصال بقاعدة البيانات
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ تم الاتصال بقاعدة البيانات"))
   .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
 
@@ -16,15 +13,16 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", UserSchema);
 
-// معالجة الطلبات
+// دالة معالجة التسجيل
 export default async function handler(req, res) {
+  console.log("📥 استلام الطلب في /register");
+
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
   const { username, password } = req.body;
 
-  // التحقق من البيانات
   if (!username || !password) {
     return res.status(400).json({
       success: false,
@@ -33,7 +31,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // التحقق من أن اسم المستخدم غير موجود مسبقًا
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({
@@ -42,7 +39,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // إنشاء مستخدم جديد
     const newUser = new User({ username, password });
     await newUser.save();
 
@@ -51,6 +47,7 @@ export default async function handler(req, res) {
       message: "تم التسجيل بنجاح",
     });
   } catch (error) {
+    console.error("❌ خطأ أثناء معالجة التسجيل:", error);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء التسجيل",

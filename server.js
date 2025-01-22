@@ -46,7 +46,6 @@ app.post("/register", async (req, res) => {
       });
     }
 
-    // تشفير كلمة المرور
     const bcrypt = await import("bcrypt");
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -58,7 +57,7 @@ app.post("/register", async (req, res) => {
       message: "تم التسجيل بنجاح",
     });
   } catch (error) {
-    console.error("❌ خطأ أثناء التسجيل:", error);
+    console.error("❌ خطأ أثناء معالجة التسجيل:", error.message);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء التسجيل",
@@ -86,7 +85,6 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // التحقق من كلمة المرور
     const bcrypt = await import("bcrypt");
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -102,13 +100,14 @@ app.post("/login", async (req, res) => {
       message: "تم تسجيل الدخول بنجاح",
     });
   } catch (error) {
-    console.error("❌ خطأ أثناء تسجيل الدخول:", error);
+    console.error("❌ خطأ أثناء تسجيل الدخول:", error.message);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء تسجيل الدخول",
     });
   }
 });
+
 
 // اختبار الخادم
 app.get("/", (req, res) => res.send("الخادم يعمل بنجاح!"));

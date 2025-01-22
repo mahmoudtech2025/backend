@@ -2,10 +2,9 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
 // الاتصال بقاعدة البيانات
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ تم الاتصال بقاعدة البيانات"))
-  .catch((err) => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
+  .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
 
 // تعريف نموذج المستخدم
 const UserSchema = new mongoose.Schema({
@@ -19,6 +18,7 @@ const User = mongoose.model("User", UserSchema);
 export default async function handler(req, res) {
   console.log("📥 استلام طلب تسجيل الدخول في /login");
 
+  // التحقق من أن الطريقة هي POST
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }

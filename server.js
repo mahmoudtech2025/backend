@@ -1,7 +1,8 @@
 import express from "express";
+import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import cors from "cors";
-import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -14,9 +15,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // الاتصال بقاعدة البيانات
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ تم الاتصال بقاعدة البيانات"))
-  .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
+  .catch((err) => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
 
 // نموذج المستخدم
 const UserSchema = new mongoose.Schema({
@@ -26,7 +28,7 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", UserSchema);
 
-// مسار تسجيل المستخدم
+// مسار التسجيل
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
@@ -46,9 +48,7 @@ app.post("/register", async (req, res) => {
       });
     }
 
-    const bcrypt = await import("bcrypt");
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
 
@@ -57,7 +57,7 @@ app.post("/register", async (req, res) => {
       message: "تم التسجيل بنجاح",
     });
   } catch (error) {
-    console.error("❌ خطأ أثناء معالجة التسجيل:", error.message);
+    console.error("❌ خطأ أثناء التسجيل:", error);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء التسجيل",
@@ -85,9 +85,7 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    const bcrypt = await import("bcrypt");
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -100,7 +98,7 @@ app.post("/login", async (req, res) => {
       message: "تم تسجيل الدخول بنجاح",
     });
   } catch (error) {
-    console.error("❌ خطأ أثناء تسجيل الدخول:", error.message);
+    console.error("❌ خطأ أثناء تسجيل الدخول:", error);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء تسجيل الدخول",
@@ -108,9 +106,10 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("الخادم يعمل بنجاح!");
+});
 
-// اختبار الخادم
-app.get("/", (req, res) => res.send("الخادم يعمل بنجاح!"));
-
-// تشغيل الخادم
-app.listen(PORT, () => console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
+});

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 // الاتصال بقاعدة البيانات
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -23,6 +24,7 @@ export default async function handler(req, res) {
 
   const { username, password } = req.body;
 
+  // التحقق من صحة البيانات المدخلة
   if (!username || !password) {
     return res.status(400).json({
       success: false,
@@ -31,6 +33,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // التحقق من أن اسم المستخدم غير موجود مسبقًا
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({
@@ -39,7 +42,11 @@ export default async function handler(req, res) {
       });
     }
 
-    const newUser = new User({ username, password });
+    // تشفير كلمة المرور
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // إنشاء مستخدم جديد مع كلمة المرور المشفرة
+    const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
 
     res.status(201).json({

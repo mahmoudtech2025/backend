@@ -1,9 +1,9 @@
-import express from "express";
-import mongoose from "mongoose";
-import bodyParser from "body-parser";
-import cors from "cors";
-import bcrypt from "bcrypt";
-import dotenv from "dotenv";
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -16,8 +16,7 @@ app.use(bodyParser.json());
 
 // الاتصال بقاعدة البيانات
 mongoose
-  .connect(process.MONGO_URI=mongodb+srv://mahmoudtech2025:mahmoud2025mahmoud@cluster0.mongodb.net/mydatabase?retryWrites=true&w=majority
-, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ تم الاتصال بقاعدة البيانات"))
   .catch((err) => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
 

@@ -1,17 +1,17 @@
 import express from "express";
-import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import cors from "cors";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-dotenv.config(); // تحميل متغيرات البيئة من ملف .env
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(bodyParser.json());
 app.use(cors());
+app.use(bodyParser.json());
 
 // الاتصال بقاعدة البيانات
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -26,16 +26,10 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", UserSchema);
 
-// المسارات
-app.get("/", (req, res) => {
-  res.send("الخادم يعمل بنجاح!");
-});
-
-// مسار التسجيل
+// مسار تسجيل المستخدم
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
-  // التحقق من البيانات
   if (!username || !password) {
     return res.status(400).json({
       success: false,
@@ -44,7 +38,6 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    // التحقق من أن اسم المستخدم غير موجود مسبقًا
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({
@@ -53,8 +46,11 @@ app.post("/register", async (req, res) => {
       });
     }
 
-    // إنشاء مستخدم جديد
-    const newUser = new User({ username, password });
+    // تشفير كلمة المرور
+    const bcrypt = await import("bcrypt");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
 
     res.status(201).json({
@@ -62,7 +58,7 @@ app.post("/register", async (req, res) => {
       message: "تم التسجيل بنجاح",
     });
   } catch (error) {
-    console.error("❌ خطأ أثناء معالجة التسجيل:", error);
+    console.error("❌ خطأ أثناء التسجيل:", error);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء التسجيل",
@@ -70,7 +66,52 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// إعداد الخادم للاستماع
-app.listen(PORT, () => {
-  console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
+// مسار تسجيل الدخول
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "يرجى إدخال اسم المستخدم وكلمة المرور",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "اسم المستخدم غير موجود",
+      });
+    }
+
+    // التحقق من كلمة المرور
+    const bcrypt = await import("bcrypt");
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "كلمة المرور غير صحيحة",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "تم تسجيل الدخول بنجاح",
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء تسجيل الدخول:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء تسجيل الدخول",
+    });
+  }
 });
+
+// اختبار الخادم
+app.get("/", (req, res) => res.send("الخادم يعمل بنجاح!"));
+
+// تشغيل الخادم
+app.listen(PORT, () => console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`));

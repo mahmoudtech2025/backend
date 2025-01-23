@@ -30,10 +30,9 @@ const User = mongoose.model("User", UserSchema);
 
 // نموذج الإيداع
 const DepositSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   amount: { type: Number, required: true },
+  phone: { type: String, required: true },
   phoneNumber: { type: String, required: true },
-  depositPhone: { type: String, required: true },
   date: { type: Date, default: Date.now },
 });
 
@@ -119,38 +118,28 @@ app.post("/login", async (req, res) => {
 
 // مسار الإيداع
 app.post("/deposit", async (req, res) => {
-  const { userId, amount, phoneNumber, depositPhone } = req.body;
+  const { depositAmount, depositPhone, phoneNumber } = req.body;
 
-  if (!userId || !amount || !phoneNumber || !depositPhone) {
+  if (!depositAmount || !depositPhone || !phoneNumber) {
     return res.status(400).json({
       success: false,
-      message: "يرجى ملء جميع الحقول",
-    });
-  }
-
-  if (depositPhone.length !== 11 || phoneNumber.length !== 11) {
-    return res.status(400).json({
-      success: false,
-      message: "رقم الهاتف يجب أن يكون 11 رقمًا",
+      message: "يرجى إدخال كافة البيانات المطلوبة",
     });
   }
 
   try {
-    // تحقق من أن المستخدم موجود في قاعدة البيانات
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
+    // التحقق من أن رقم الهاتف يحتوي على 11 رقم
+    if (depositPhone.length !== 11) {
+      return res.status(400).json({
         success: false,
-        message: "المستخدم غير موجود",
+        message: "رقم الهاتف يجب أن يكون 11 رقمًا",
       });
     }
 
-    // حفظ الإيداع في قاعدة البيانات
     const newDeposit = new Deposit({
-      userId: user._id,
-      amount,
+      amount: depositAmount,
+      phone: depositPhone,
       phoneNumber,
-      depositPhone,
     });
 
     await newDeposit.save();
@@ -168,7 +157,6 @@ app.post("/deposit", async (req, res) => {
   }
 });
 
-// الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.send("الخادم يعمل بنجاح!");
 });

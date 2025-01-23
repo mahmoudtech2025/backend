@@ -1,182 +1,76 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
-
-dotenv.config();
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// الاتصال بقاعدة البيانات
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ تم الاتصال بقاعدة البيانات"))
-  .catch((err) => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
+  .then(() => console.log("✅ Connected to Database"))
+  .catch((err) => console.log("❌ Database Connection Error: ", err));
 
-// نموذج المستخدم
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  balance: { type: Number, default: 0 }, // إضافة حقل الرصيد
+  balance: { type: Number, default: 0 },
 });
 
 const User = mongoose.model("User", UserSchema);
 
-// نموذج الإيداع
-const DepositSchema = new mongoose.Schema({
-  amount: { type: Number, required: true },
-  phone: { type: String, required: true },
-  phoneNumber: { type: String, required: true },
-  date: { type: Date, default: Date.now },
-});
-
-const Deposit = mongoose.model("Deposit", DepositSchema);
-
-// مسار التسجيل
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "يرجى إدخال اسم المستخدم وكلمة المرور",
-    });
-  }
+  if (!username || !password) return res.status(400).json({ success: false, message: "All fields are required." });
 
   try {
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "اسم المستخدم موجود مسبقًا",
-      });
-    }
+    if (existingUser) return res.status(400).json({ success: false, message: "Username already exists." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
-
-    res.status(201).json({
-      success: true,
-      message: "تم التسجيل بنجاح",
-    });
+    res.status(201).json({ success: true, message: "Account created successfully." });
   } catch (error) {
-    console.error("❌ خطأ أثناء التسجيل:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء التسجيل",
-    });
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
 
-// مسار تسجيل الدخول
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "يرجى إدخال اسم المستخدم وكلمة المرور",
-    });
-  }
+  if (!username || !password) return res.status(400).json({ success: false, message: "All fields are required." });
 
   try {
     const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "اسم المستخدم غير موجود",
-      });
-    }
+    if (!user) return res.status(404).json({ success: false, message: "User not found." });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "كلمة المرور غير صحيحة",
-      });
-    }
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return res.status(401).json({ success: false, message: "Invalid credentials." });
 
-    res.status(200).json({
-      success: true,
-      message: "تم تسجيل الدخول بنجاح",
-    });
+    res.status(200).json({ success: true, balance: user.balance, message: "Login successful." });
   } catch (error) {
-    console.error("❌ خطأ أثناء تسجيل الدخول:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء تسجيل الدخول",
-    });
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
 
-// مسار الإيداع
 app.post("/deposit", async (req, res) => {
-  const { depositAmount, depositPhone, phoneNumber, username } = req.body;
-
-  if (!depositAmount || !depositPhone || !phoneNumber || !username) {
-    return res.status(400).json({
-      success: false,
-      message: "يرجى إدخال كافة البيانات المطلوبة",
-    });
-  }
+  const { username, depositAmount } = req.body;
+  if (!username || !depositAmount) return res.status(400).json({ success: false, message: "All fields are required." });
 
   try {
-    // التحقق من أن رقم الهاتف يحتوي على 11 رقم
-    if (depositPhone.length !== 11) {
-      return res.status(400).json({
-        success: false,
-        message: "رقم الهاتف يجب أن يكون 11 رقمًا",
-      });
-    }
-
-    // التحقق من وجود المستخدم
     const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "المستخدم غير موجود",
-      });
-    }
+    if (!user) return res.status(404).json({ success: false, message: "User not found." });
 
-    // إضافة المبلغ إلى رصيد المستخدم
-    user.balance += depositAmount; // إضافة المبلغ إلى الرصيد الحالي للمستخدم
+    user.balance += depositAmount;
     await user.save();
 
-    // إضافة الإيداع في قاعدة البيانات
-    const newDeposit = new Deposit({
-      amount: depositAmount,
-      phone: depositPhone,
-      phoneNumber,
-    });
-
-    await newDeposit.save();
-
-    res.status(201).json({
-      success: true,
-      message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
-      balance: user.balance, // إرجاع الرصيد الجديد للمستخدم
-    });
+    res.status(200).json({ success: true, balance: user.balance, message: "Deposit successful." });
   } catch (error) {
-    console.error("❌ خطأ أثناء الإيداع:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء الإيداع",
-    });
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("الخادم يعمل بنجاح!");
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
-});
+app.listen(process.env.PORT || 5000, () => console.log("🚀 Server is running..."));

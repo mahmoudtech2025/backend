@@ -24,6 +24,7 @@ mongoose
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  balance: { type: Number, default: 0 }, // إضافة حقل الرصيد
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -118,9 +119,9 @@ app.post("/login", async (req, res) => {
 
 // مسار الإيداع
 app.post("/deposit", async (req, res) => {
-  const { depositAmount, depositPhone, phoneNumber } = req.body;
+  const { depositAmount, depositPhone, phoneNumber, username } = req.body;
 
-  if (!depositAmount || !depositPhone || !phoneNumber) {
+  if (!depositAmount || !depositPhone || !phoneNumber || !username) {
     return res.status(400).json({
       success: false,
       message: "يرجى إدخال كافة البيانات المطلوبة",
@@ -136,6 +137,20 @@ app.post("/deposit", async (req, res) => {
       });
     }
 
+    // التحقق من وجود المستخدم
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم غير موجود",
+      });
+    }
+
+    // إضافة المبلغ إلى رصيد المستخدم
+    user.balance += depositAmount; // إضافة المبلغ إلى الرصيد الحالي للمستخدم
+    await user.save();
+
+    // إضافة الإيداع في قاعدة البيانات
     const newDeposit = new Deposit({
       amount: depositAmount,
       phone: depositPhone,
@@ -146,7 +161,7 @@ app.post("/deposit", async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "تم الإيداع بنجاح",
+      message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
     });
   } catch (error) {
     console.error("❌ خطأ أثناء الإيداع:", error);

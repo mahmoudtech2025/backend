@@ -162,6 +162,7 @@ app.post("/deposit", async (req, res) => {
     res.status(201).json({
       success: true,
       message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
+      balance: user.balance, // إرجاع الرصيد الجديد للمستخدم
     });
   } catch (error) {
     console.error("❌ خطأ أثناء الإيداع:", error);

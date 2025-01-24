@@ -185,9 +185,9 @@ app.post("/deposit", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("الخادم يعمل بنجاح!");
+    res.send("الخادم يعمل بنجاح!");
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
+    console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
 });

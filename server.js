@@ -31,10 +31,12 @@ const User = mongoose.model("User", UserSchema);
 
 // نموذج الإيداع
 const DepositSchema = new mongoose.Schema({
+  username: { type: String, required: true }, // اسم المستخدم لربط الإيداع به
   amount: { type: Number, required: true },
   phone: { type: String, required: true },
   phoneNumber: { type: String, required: true },
   date: { type: Date, default: Date.now },
+  status: { type: String, default: "Pending" }, // حالة الإيداع (معلق)
 });
 
 const Deposit = mongoose.model("Deposit", DepositSchema);
@@ -121,20 +123,13 @@ app.post("/login", async (req, res) => {
 app.post("/deposit", async (req, res) => {
   const { username, depositAmount, depositPhone, phoneNumber } = req.body;
 
-  // التحقق من وجود البيانات المطلوبة
-  if (!depositAmount || !depositPhone || !phoneNumber) {
-    let missingFields = [];
-    if (!depositAmount) missingFields.push("المبلغ");
-    if (!depositPhone) missingFields.push("رقم الهاتف");
-    if (!phoneNumber) missingFields.push("رقم الهاتف المختار");
-
+  if (!username || !depositAmount || !depositPhone || !phoneNumber) {
     return res.status(400).json({
       success: false,
-      message: `يرجى إدخال البيانات التالية: ${missingFields.join(", ")}`,
+      message: "يرجى إدخال جميع البيانات المطلوبة",
     });
   }
 
-  // التحقق من أن رقم الهاتف يحتوي على 11 رقم
   if (depositPhone.length !== 11) {
     return res.status(400).json({
       success: false,
@@ -143,7 +138,6 @@ app.post("/deposit", async (req, res) => {
   }
 
   try {
-    // التحقق من وجود المستخدم
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({
@@ -152,8 +146,9 @@ app.post("/deposit", async (req, res) => {
       });
     }
 
-    // تسجيل طلب الإيداع في قاعدة البيانات دون تحديث الرصيد
+    // تسجيل طلب الإيداع فقط
     const newDeposit = new Deposit({
+      username,
       amount: depositAmount,
       phone: depositPhone,
       phoneNumber,

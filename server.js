@@ -121,22 +121,29 @@ app.post("/login", async (req, res) => {
 app.post("/deposit", async (req, res) => {
   const { depositAmount, depositPhone, phoneNumber, username } = req.body;
 
+  // التحقق من وجود البيانات المطلوبة
   if (!depositAmount || !depositPhone || !phoneNumber || !username) {
+    let missingFields = [];
+    if (!depositAmount) missingFields.push("المبلغ");
+    if (!depositPhone) missingFields.push("رقم الهاتف");
+    if (!phoneNumber) missingFields.push("رقم الهاتف المختار");
+    if (!username) missingFields.push("اسم المستخدم");
+
     return res.status(400).json({
       success: false,
-      message: "يرجى إدخال كافة البيانات المطلوبة",
+      message: `يرجى إدخال البيانات التالية: ${missingFields.join(", ")}`,
+    });
+  }
+
+  // التحقق من أن رقم الهاتف يحتوي على 11 رقم
+  if (depositPhone.length !== 11) {
+    return res.status(400).json({
+      success: false,
+      message: "رقم الهاتف يجب أن يكون 11 رقمًا",
     });
   }
 
   try {
-    // التحقق من أن رقم الهاتف يحتوي على 11 رقم
-    if (depositPhone.length !== 11) {
-      return res.status(400).json({
-        success: false,
-        message: "رقم الهاتف يجب أن يكون 11 رقمًا",
-      });
-    }
-
     // التحقق من وجود المستخدم
     const user = await User.findOne({ username });
     if (!user) {
@@ -147,7 +154,7 @@ app.post("/deposit", async (req, res) => {
     }
 
     // إضافة المبلغ إلى رصيد المستخدم
-    user.balance += depositAmount; // إضافة المبلغ إلى الرصيد الحالي للمستخدم
+    user.balance += depositAmount;
     await user.save();
 
     // إضافة الإيداع في قاعدة البيانات

@@ -119,15 +119,14 @@ app.post("/login", async (req, res) => {
 
 // مسار الإيداع
 app.post("/deposit", async (req, res) => {
-  const { depositAmount, depositPhone, phoneNumber, username } = req.body;
+  const { depositAmount, depositPhone, phoneNumber } = req.body;
 
   // التحقق من وجود البيانات المطلوبة
-  if (!depositAmount || !depositPhone || !phoneNumber || !username) {
+  if (!depositAmount || !depositPhone || !phoneNumber) {
     let missingFields = [];
     if (!depositAmount) missingFields.push("المبلغ");
     if (!depositPhone) missingFields.push("رقم الهاتف");
     if (!phoneNumber) missingFields.push("رقم الهاتف المختار");
-    if (!username) missingFields.push("اسم المستخدم");
 
     return res.status(400).json({
       success: false,
@@ -145,7 +144,7 @@ app.post("/deposit", async (req, res) => {
 
   try {
     // التحقق من وجود المستخدم
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username: req.body.username });
     if (!user) {
       return res.status(404).json({
         success: false,

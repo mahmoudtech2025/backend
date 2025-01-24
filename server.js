@@ -119,64 +119,64 @@ app.post("/login", async (req, res) => {
 
 // مسار الإيداع
 app.post("/deposit", async (req, res) => {
-  const { depositAmount, depositPhone, phoneNumber } = req.body;
+    const { username, depositAmount, depositPhone, phoneNumber } = req.body;
 
-  // التحقق من وجود البيانات المطلوبة
-  if (!depositAmount || !depositPhone || !phoneNumber) {
-    let missingFields = [];
-    if (!depositAmount) missingFields.push("المبلغ");
-    if (!depositPhone) missingFields.push("رقم الهاتف");
-    if (!phoneNumber) missingFields.push("رقم الهاتف المختار");
+    // التحقق من وجود البيانات المطلوبة
+    if (!depositAmount || !depositPhone || !phoneNumber) {
+        let missingFields = [];
+        if (!depositAmount) missingFields.push("المبلغ");
+        if (!depositPhone) missingFields.push("رقم الهاتف");
+        if (!phoneNumber) missingFields.push("رقم الهاتف المختار");
 
-    return res.status(400).json({
-      success: false,
-      message: `يرجى إدخال البيانات التالية: ${missingFields.join(", ")}`,
-    });
-  }
-
-  // التحقق من أن رقم الهاتف يحتوي على 11 رقم
-  if (depositPhone.length !== 11) {
-    return res.status(400).json({
-      success: false,
-      message: "رقم الهاتف يجب أن يكون 11 رقمًا",
-    });
-  }
-
-  try {
-    // التحقق من وجود المستخدم
-    const user = await User.findOne({ username: req.body.username });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "المستخدم غير موجود",
-      });
+        return res.status(400).json({
+            success: false,
+            message: `يرجى إدخال البيانات التالية: ${missingFields.join(", ")}`,
+        });
     }
 
-    // إضافة المبلغ إلى رصيد المستخدم
-    user.balance += depositAmount;
-    await user.save();
+    // التحقق من أن رقم الهاتف يحتوي على 11 رقم
+    if (depositPhone.length !== 11) {
+        return res.status(400).json({
+            success: false,
+            message: "رقم الهاتف يجب أن يكون 11 رقمًا",
+        });
+    }
 
-    // إضافة الإيداع في قاعدة البيانات
-    const newDeposit = new Deposit({
-      amount: depositAmount,
-      phone: depositPhone,
-      phoneNumber,
-    });
+    try {
+        // التحقق من وجود المستخدم
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "المستخدم غير موجود",
+            });
+        }
 
-    await newDeposit.save();
+        // إضافة المبلغ إلى رصيد المستخدم
+        user.balance += depositAmount;
+        await user.save();
 
-    res.status(201).json({
-      success: true,
-      message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
-      balance: user.balance, // إرجاع الرصيد الجديد للمستخدم
-    });
-  } catch (error) {
-    console.error("❌ خطأ أثناء الإيداع:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء الإيداع",
-    });
-  }
+        // إضافة الإيداع في قاعدة البيانات
+        const newDeposit = new Deposit({
+            amount: depositAmount,
+            phone: depositPhone,
+            phoneNumber,
+        });
+
+        await newDeposit.save();
+
+        res.status(201).json({
+            success: true,
+            message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
+            balance: user.balance, // إرجاع الرصيد الجديد للمستخدم
+        });
+    } catch (error) {
+        console.error("❌ خطأ أثناء الإيداع:", error);
+        res.status(500).json({
+            success: false,
+            message: "حدث خطأ أثناء الإيداع",
+        });
+    }
 });
 
 app.get("/", (req, res) => {

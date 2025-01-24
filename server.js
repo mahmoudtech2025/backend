@@ -138,6 +138,7 @@ app.post("/deposit", async (req, res) => {
   }
 
   try {
+    // البحث عن المستخدم
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({
@@ -158,7 +159,7 @@ app.post("/deposit", async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "يرجى الانتظار، جاري إضافة الرصيد إلى حسابك.",
+      message: "يرجى الانتظار، سيتم إضافة الرصيد لاحقًا.",
     });
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل طلب الإيداع:", error);

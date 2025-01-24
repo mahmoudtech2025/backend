@@ -24,18 +24,18 @@ mongoose
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  balance: { type: Number, default: 0 }, // إضافة حقل الرصيد
+  balance: { type: Number, default: 0 }, // حقل الرصيد
 });
 
 const User = mongoose.model("User", UserSchema);
 
 // نموذج الإيداع
 const DepositSchema = new mongoose.Schema({
-  username: { type: String, required: true }, // اسم المستخدم لربط الإيداع به
-  amount: { type: Number, required: true },
-  phone: { type: String, required: true },
-  phoneNumber: { type: String, required: true },
-  date: { type: Date, default: Date.now },
+  username: { type: String, required: true }, // ربط الإيداع بالمستخدم
+  amount: { type: Number, required: true }, // المبلغ
+  phone: { type: String, required: true }, // الهاتف
+  phoneNumber: { type: String, required: true }, // رقم الهاتف المختار
+  date: { type: Date, default: Date.now }, // تاريخ الإيداع
   status: { type: String, default: "Pending" }, // حالة الإيداع (معلق)
 });
 
@@ -146,7 +146,7 @@ app.post("/deposit", async (req, res) => {
       });
     }
 
-    // تسجيل طلب الإيداع فقط
+    // تسجيل طلب الإيداع فقط دون تعديل الرصيد
     const newDeposit = new Deposit({
       username,
       amount: depositAmount,

@@ -119,7 +119,6 @@ app.post("/login", async (req, res) => {
 
 // مسار الإيداع
 app.post("/deposit", async (req, res) => {
-app.post("/deposit", async (req, res) => {
   const { username, depositAmount, depositPhone, phoneNumber } = req.body;
 
   // التحقق من وجود البيانات المطلوبة
@@ -153,14 +152,7 @@ app.post("/deposit", async (req, res) => {
       });
     }
 
-    // إرجاع رسالة "جاري إضافة الرصيد" للمستخدم
-    res.status(200).json({
-      success: true,
-      message: "جاري إضافة الرصيد إلى حسابك. يرجى الانتظار...",
-    });
-
-    // الآن في الخلفية، إضافة المبلغ إلى رصيد المستخدم
-    // ملاحظة: هنا يمكن أن يتم تنفيذ خطوة تحقق من عملية الدفع، ثم إضافة الرصيد
+    // إضافة المبلغ إلى رصيد المستخدم
     user.balance += depositAmount;
     await user.save();
 
@@ -173,8 +165,11 @@ app.post("/deposit", async (req, res) => {
 
     await newDeposit.save();
 
-    console.log(`تم إضافة رصيد بقيمة ${depositAmount} للمستخدم ${username}`);
-
+    res.status(201).json({
+      success: true,
+      message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
+      balance: user.balance, // إرجاع الرصيد الجديد للمستخدم
+    });
   } catch (error) {
     console.error("❌ خطأ أثناء الإيداع:", error);
     res.status(500).json({
@@ -184,10 +179,12 @@ app.post("/deposit", async (req, res) => {
   }
 });
 
+// التأكد من عمل الخادم
 app.get("/", (req, res) => {
-    res.send("الخادم يعمل بنجاح!");
+  res.send("الخادم يعمل بنجاح!");
 });
 
+// تشغيل الخادم
 app.listen(PORT, () => {
-    console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
+  console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
 });

@@ -152,11 +152,7 @@ app.post("/deposit", async (req, res) => {
       });
     }
 
-    // إضافة المبلغ إلى رصيد المستخدم
-    user.balance += depositAmount;
-    await user.save();
-
-    // إضافة الإيداع في قاعدة البيانات
+    // تسجيل طلب الإيداع في قاعدة البيانات دون تحديث الرصيد
     const newDeposit = new Deposit({
       amount: depositAmount,
       phone: depositPhone,
@@ -167,14 +163,13 @@ app.post("/deposit", async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: `تم الإيداع بنجاح. رصيدك الحالي: ${user.balance} جنيه`,
-      balance: user.balance, // إرجاع الرصيد الجديد للمستخدم
+      message: "يرجى الانتظار، جاري إضافة الرصيد إلى حسابك.",
     });
   } catch (error) {
-    console.error("❌ خطأ أثناء الإيداع:", error);
+    console.error("❌ خطأ أثناء تسجيل طلب الإيداع:", error);
     res.status(500).json({
       success: false,
-      message: "حدث خطأ أثناء الإيداع",
+      message: "حدث خطأ أثناء تسجيل طلب الإيداع",
     });
   }
 });

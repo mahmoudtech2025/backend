@@ -36,7 +36,7 @@ const DepositSchema = new mongoose.Schema({
   phone: { type: String, required: true }, // الهاتف
   phoneNumber: { type: String, required: true }, // رقم الهاتف المختار
   date: { type: Date, default: Date.now }, // تاريخ الإيداع
-  status: { type: String, default: "Pending" }, // حالة الإيداع (معلق)
+  status: { type: String, default: "Pending" }, // حالة الإيداع (معلق، مكتمل)
 });
 
 const Deposit = mongoose.model("Deposit", DepositSchema);
@@ -138,7 +138,6 @@ app.post("/deposit", async (req, res) => {
   }
 
   try {
-    // البحث عن المستخدم
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({
@@ -166,6 +165,55 @@ app.post("/deposit", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء تسجيل طلب الإيداع",
+    });
+  }
+});
+
+// تحديث الرصيد بناءً على حالة الإيداع
+app.put("/update-balance", async (req, res) => {
+  const { depositId } = req.body;
+
+  try {
+    const deposit = await Deposit.findById(depositId);
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "الإيداع غير موجود",
+      });
+    }
+
+    if (deposit.status === "Completed") {
+      return res.status(400).json({
+        success: false,
+        message: "تمت معالجة هذا الإيداع مسبقًا",
+      });
+    }
+
+    const user = await User.findOne({ username: deposit.username });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم المرتبط بهذا الإيداع غير موجود",
+      });
+    }
+
+    // تحديث الرصيد
+    user.balance += deposit.amount;
+    await user.save();
+
+    // تحديث حالة الإيداع
+    deposit.status = "Completed";
+    await deposit.save();
+
+    res.status(200).json({
+      success: true,
+      message: "تم تحديث الرصيد بنجاح",
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء تحديث الرصيد:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء تحديث الرصيد",
     });
   }
 });

@@ -196,7 +196,60 @@ app.put("/update-balance", async (req, res) => {
         message: "المستخدم المرتبط بهذا الإيداع غير موجود",
       });
     }
+app.put("/update-deposit-status", async (req, res) => {
+  const { depositId, newStatus } = req.body;
 
+  if (!depositId || !newStatus) {
+    return res.status(400).json({
+      success: false,
+      message: "يرجى إرسال معرف الإيداع والحالة الجديدة",
+    });
+  }
+
+  try {
+    const deposit = await Deposit.findById(depositId);
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "الإيداع غير موجود",
+      });
+    }
+
+    if (deposit.status === "Completed") {
+      return res.status(400).json({
+        success: false,
+        message: "تمت معالجة هذا الإيداع مسبقًا",
+      });
+    }
+
+    const user = await User.findOne({ username: deposit.username });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم غير موجود",
+      });
+    }
+
+    if (newStatus === "Completed") {
+      user.balance += deposit.amount; // إضافة المبلغ إلى الرصيد
+      await user.save();
+    }
+
+    deposit.status = newStatus; // تحديث حالة الإيداع
+    await deposit.save();
+
+    res.status(200).json({
+      success: true,
+      message: `تم تحديث الإيداع إلى الحالة: ${newStatus}`,
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء تحديث حالة الإيداع:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء تحديث حالة الإيداع",
+    });
+  }
+});
     // تحديث الرصيد
     user.balance += deposit.amount;
     await user.save();

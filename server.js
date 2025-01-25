@@ -196,7 +196,7 @@ app.put("/update-balance", async (req, res) => {
         message: "المستخدم المرتبط بهذا الإيداع غير موجود",
       });
     }
-// مسار لتحديث حالة الإيداع وزيادة الرصيد إذا كانت الحالة مكتملة
+// تحديث حالة الإيداع وزيادة الرصيد للمستخدم
 app.put("/update-deposit-status", async (req, res) => {
   const { depositId, newStatus } = req.body;
 
@@ -242,7 +242,7 @@ app.put("/update-deposit-status", async (req, res) => {
     // إذا كانت الحالة جديدة "Completed"، أضف المبلغ إلى رصيد المستخدم
     if (newStatus === "Completed") {
       user.balance += deposit.amount;
-      await user.save(); // تأكد من حفظ التحديث
+      await user.save(); // تأكد من حفظ التحديث على المستخدم
     }
 
     deposit.status = newStatus; // تحديث حالة الإيداع

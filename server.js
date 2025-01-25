@@ -169,33 +169,6 @@ app.post("/deposit", async (req, res) => {
   }
 });
 
-// تحديث الرصيد بناءً على حالة الإيداع
-app.put("/update-balance", async (req, res) => {
-  const { depositId } = req.body;
-
-  try {
-    const deposit = await Deposit.findById(depositId);
-    if (!deposit) {
-      return res.status(404).json({
-        success: false,
-        message: "الإيداع غير موجود",
-      });
-    }
-
-    if (deposit.status === "Completed") {
-      return res.status(400).json({
-        success: false,
-        message: "تمت معالجة هذا الإيداع مسبقًا",
-      });
-    }
-
-    const user = await User.findOne({ username: deposit.username });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "المستخدم المرتبط بهذا الإيداع غير موجود",
-      });
-    }
 app.put("/update-deposit-status", async (req, res) => {
   const { depositId, newStatus } = req.body;
 
@@ -250,6 +223,7 @@ app.put("/update-deposit-status", async (req, res) => {
     });
   }
 });
+
     // تحديث الرصيد
     user.balance += deposit.amount;
     await user.save();

@@ -251,6 +251,32 @@ app.put("/update-deposit-status", async (req, res) => {
     });
   }
 });
+    // مسار Polling للتحقق من حالة الإيداع
+app.get("/poll-deposit-status/:depositId", async (req, res) => {
+  const { depositId } = req.params;
+
+  try {
+    const deposit = await Deposit.findById(depositId);
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "الإيداع غير موجود",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      status: deposit.status,
+      depositId: deposit._id,
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء التحقق من حالة الإيداع:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء التحقق من حالة الإيداع",
+    });
+  }
+});
     // تحديث الرصيد
     user.balance += deposit.amount;
     await user.save();

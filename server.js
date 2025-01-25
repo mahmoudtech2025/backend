@@ -169,6 +169,33 @@ app.post("/deposit", async (req, res) => {
   }
 });
 
+// تحديث الرصيد بناءً على حالة الإيداع
+app.put("/update-balance", async (req, res) => {
+  const { depositId } = req.body;
+
+  try {
+    const deposit = await Deposit.findById(depositId);
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "الإيداع غير موجود",
+      });
+    }
+
+    if (deposit.status === "Completed") {
+      return res.status(400).json({
+        success: false,
+        message: "تمت معالجة هذا الإيداع مسبقًا",
+      });
+    }
+
+    const user = await User.findOne({ username: deposit.username });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم المرتبط بهذا الإيداع غير موجود",
+      });
+    }
 app.put("/update-deposit-status", async (req, res) => {
   const { depositId, newStatus } = req.body;
 
@@ -221,6 +248,28 @@ app.put("/update-deposit-status", async (req, res) => {
       success: false,
       message: "حدث خطأ أثناء تحديث حالة الإيداع",
     });
+  }
+});
+    // تحديث الرصيد
+    user.balance += deposit.amount;
+    await user.save();
+
+    // تحديث حالة الإيداع
+    deposit.status = "Completed";
+    await deposit.save();
+
+    res.status(200).json({
+      success: true,
+      message: "تم تحديث الرصيد بنجاح",
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء تحديث الرصيد:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء تحديث الرصيد",
+    });
+  }
+});
 
 // التأكد من عمل الخادم
 app.get("/", (req, res) => {

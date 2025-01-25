@@ -221,16 +221,6 @@ app.put("/update-deposit-status", async (req, res) => {
       success: false,
       message: "حدث خطأ أثناء تحديث حالة الإيداع",
     });
-  }
-});
-catch (error) {
-    console.error("❌ خطأ أثناء تحديث الرصيد:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء تحديث الرصيد",
-    });
-  }
-});
 
 // التأكد من عمل الخادم
 app.get("/", (req, res) => {

@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
-const jwt = require("jsonwebtoken"); // إضافة مكتبة JWT
 
 dotenv.config();
 
@@ -107,13 +106,9 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // إنشاء توكن JWT
-    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
     res.status(200).json({
       success: true,
       message: "تم تسجيل الدخول بنجاح",
-      token, // إرسال التوكن مع الرد
     });
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل الدخول:", error);
@@ -124,33 +119,11 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Middleware للتحقق من التوكن
-const authenticateToken = (req, res, next) => {
-  const token = req.headers["authorization"];
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "يرجى تقديم التوكن",
-    });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({
-        success: false,
-        message: "التوكن غير صالح",
-      });
-    }
-    req.user = user;
-    next();
-  });
-};
-
 // مسار الإيداع
-app.post("/deposit", authenticateToken, async (req, res) => {
-  const { depositAmount, depositPhone, phoneNumber } = req.body;
+app.post("/deposit", async (req, res) => {
+  const { username, depositAmount, depositPhone, phoneNumber } = req.body;
 
-  if (!depositAmount || !depositPhone || !phoneNumber) {
+  if (!username || !depositAmount || !depositPhone || !phoneNumber) {
     return res.status(400).json({
       success: false,
       message: "يرجى إدخال جميع البيانات المطلوبة",
@@ -165,7 +138,7 @@ app.post("/deposit", authenticateToken, async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ username: req.user.username });
+    const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -175,7 +148,7 @@ app.post("/deposit", authenticateToken, async (req, res) => {
 
     // تسجيل طلب الإيداع فقط دون تعديل الرصيد
     const newDeposit = new Deposit({
-      username: req.user.username,
+      username,
       amount: depositAmount,
       phone: depositPhone,
       phoneNumber,
@@ -197,7 +170,7 @@ app.post("/deposit", authenticateToken, async (req, res) => {
 });
 
 // تحديث الرصيد بناءً على حالة الإيداع
-app.put("/update-balance", authenticateToken, async (req, res) => {
+app.put("/update-balance", async (req, res) => {
   const { depositId } = req.body;
 
   try {
@@ -223,30 +196,7 @@ app.put("/update-balance", authenticateToken, async (req, res) => {
         message: "المستخدم المرتبط بهذا الإيداع غير موجود",
       });
     }
-
-    // تحديث الرصيد
-    user.balance += deposit.amount;
-    await user.save();
-
-    // تحديث حالة الإيداع
-    deposit.status = "Completed";
-    await deposit.save();
-
-    res.status(200).json({
-      success: true,
-      message: "تم تحديث الرصيد بنجاح",
-    });
-  } catch (error) {
-    console.error("❌ خطأ أثناء تحديث الرصيد:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء تحديث الرصيد",
-    });
-  }
-});
-
-// تحديث حالة الإيداع
-app.put("/update-deposit-status", authenticateToken, async (req, res) => {
+app.put("/update-deposit-status", async (req, res) => {
   const { depositId, newStatus } = req.body;
 
   if (!depositId || !newStatus) {
@@ -297,6 +247,26 @@ app.put("/update-deposit-status", authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء تحديث حالة الإيداع",
+    });
+  }
+});
+    // تحديث الرصيد
+    user.balance += deposit.amount;
+    await user.save();
+
+    // تحديث حالة الإيداع
+    deposit.status = "Completed";
+    await deposit.save();
+
+    res.status(200).json({
+      success: true,
+      message: "تم تحديث الرصيد بنجاح",
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء تحديث الرصيد:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء تحديث الرصيد",
     });
   }
 });

@@ -261,18 +261,7 @@ app.get("/poll-deposit-status/:depositId", async (req, res) => {
     });
   }
 });
-    // تحديث الرصيد
-    user.balance += deposit.amount;
-    await user.save();
-
-    // تحديث حالة الإيداع
-    deposit.status = "Completed";
-    await deposit.save();
-
-    res.status(200).json({
-      success: true,
-      message: "تم تحديث الرصيد بنجاح",
-    });
+    
   } catch (error) {
     console.error("❌ خطأ أثناء تحديث الرصيد:", error);
     res.status(500).json({

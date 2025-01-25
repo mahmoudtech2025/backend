@@ -223,9 +223,7 @@ app.put("/update-deposit-status", async (req, res) => {
     });
   }
 });
-
-
-  } catch (error) {
+catch (error) {
     console.error("❌ خطأ أثناء تحديث الرصيد:", error);
     res.status(500).json({
       success: false,

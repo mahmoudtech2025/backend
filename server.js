@@ -275,26 +275,6 @@ app.put("/update-deposit-status", async (req, res) => {
 app.get("/", (req, res) => {
   res.send("الخادم يعمل بنجاح!");
 });
-const http = require("http");
-const socketIo = require("socket.io");
-
-// إنشاء خادم HTTP مع Express
-const server = http.createServer(app);
-
-// إعداد Socket.IO
-const io = socketIo(server, {
-  cors: {
-    origin: "*", // السماح بكل المصادر، يمكنك تخصيصها لموقعك
-    methods: ["GET", "POST"],
-  },
-});
-
-io.on("connection", (socket) => {
-  console.log("📡 عميل متصل");
-
-  socket.on("disconnect", () => {
-    console.log("📴 عميل قطع الاتصال");
-  });
 
 // تشغيل الخادم
 app.listen(PORT, () => {

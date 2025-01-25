@@ -196,6 +196,7 @@ app.put("/update-balance", async (req, res) => {
         message: "المستخدم المرتبط بهذا الإيداع غير موجود",
       });
     }
+// مسار لتحديث حالة الإيداع وزيادة الرصيد إذا كانت الحالة مكتملة
 app.put("/update-deposit-status", async (req, res) => {
   const { depositId, newStatus } = req.body;
 
@@ -215,10 +216,18 @@ app.put("/update-deposit-status", async (req, res) => {
       });
     }
 
+    // تأكد من أن الإيداع في الحالة الصحيحة
     if (deposit.status === "Completed") {
       return res.status(400).json({
         success: false,
         message: "تمت معالجة هذا الإيداع مسبقًا",
+      });
+    }
+    
+    if (newStatus === "Completed" && deposit.status !== "Pending") {
+      return res.status(400).json({
+        success: false,
+        message: "لا يمكن تحديث الإيداع إلى 'Completed' إلا بعد أن يكون في حالة 'Pending'",
       });
     }
 

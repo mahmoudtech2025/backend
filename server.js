@@ -227,7 +227,6 @@ app.put("/update-deposit-status", async (req, res) => {
     // تحديث الرصيد
     user.balance += deposit.amount;
     await user.save();
-
     // تحديث حالة الإيداع
     deposit.status = "Completed";
     await deposit.save();

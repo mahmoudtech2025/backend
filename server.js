@@ -230,13 +230,14 @@ app.put("/update-deposit-status", async (req, res) => {
       });
     }
 
+    // إذا كانت الحالة جديدة "Completed"، أضف المبلغ إلى رصيد المستخدم
     if (newStatus === "Completed") {
-      user.balance += deposit.amount; // إضافة المبلغ إلى الرصيد
-      await user.save();
+      user.balance += deposit.amount;
+      await user.save(); // تأكد من حفظ التحديث
     }
 
     deposit.status = newStatus; // تحديث حالة الإيداع
-    await deposit.save();
+    await deposit.save(); // تأكد من حفظ حالة الإيداع الجديدة
 
     res.status(200).json({
       success: true,

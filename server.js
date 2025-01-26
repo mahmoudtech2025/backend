@@ -32,6 +32,7 @@ const User = mongoose.model("User", UserSchema);
 // مسار التسجيل
 app.post("/register", async (req, res) => {
   const { username, password, email } = req.body;
+  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password || !email) {
     return res.status(400).json({
@@ -41,7 +42,6 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    // التحقق من وجود المستخدم والإيميل
     const existingUser = await User.findOne({ username });
     const existingEmail = await User.findOne({ email });
     if (existingUser || existingEmail) {
@@ -71,6 +71,7 @@ app.post("/register", async (req, res) => {
 // مسار تسجيل الدخول
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password) {
     return res.status(400).json({

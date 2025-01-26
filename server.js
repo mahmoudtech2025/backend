@@ -24,32 +24,35 @@ mongoose
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  email: { type: String, required: true, unique: true }, // إضافة حقل الإيميل
 });
 
 const User = mongoose.model("User", UserSchema);
 
 // مسار التسجيل
 app.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
 
-  if (!username || !password) {
+  if (!username || !password || !email) {
     return res.status(400).json({
       success: false,
-      message: "يرجى إدخال اسم المستخدم وكلمة المرور",
+      message: "يرجى إدخال اسم المستخدم وكلمة المرور والإيميل",
     });
   }
 
   try {
+    // التحقق من وجود المستخدم والإيميل
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
+    const existingEmail = await User.findOne({ email });
+    if (existingUser || existingEmail) {
       return res.status(400).json({
         success: false,
-        message: "اسم المستخدم موجود مسبقًا",
+        message: "اسم المستخدم أو الإيميل موجود مسبقًا",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new User({ username, password: hashedPassword, email });
     await newUser.save();
 
     res.status(201).json({

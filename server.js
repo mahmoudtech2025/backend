@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -24,7 +25,8 @@ mongoose
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true }, // إضافة حقل الإيميل
+  email: { type: String, required: true, unique: true },
+  balance: { type: Number, default: 0 },  // إضافة حقل الرصيد
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -71,7 +73,6 @@ app.post("/register", async (req, res) => {
 // مسار تسجيل الدخول
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password) {
     return res.status(400).json({
@@ -97,15 +98,59 @@ app.post("/login", async (req, res) => {
       });
     }
 
+    // إنشاء التوكن عند تسجيل الدخول بنجاح
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
     res.status(200).json({
       success: true,
       message: "تم تسجيل الدخول بنجاح",
+      token: token, // إرسال التوكن للعميل
     });
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل الدخول:", error);
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء تسجيل الدخول",
+    });
+  }
+});
+
+// مسار جلب بيانات المستخدم
+app.get("/getUserData", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1]; // استخراج التوكن من الهيدر
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "توكن غير موجود",
+    });
+  }
+
+  try {
+    // التحقق من صحة التوكن
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // العثور على المستخدم باستخدام المعرف الموجود في التوكن
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم غير موجود",
+      });
+    }
+
+    // إرسال بيانات المستخدم
+    res.status(200).json({
+      success: true,
+      username: user.username,
+      balance: user.balance, // تأكد من أن حقل الرصيد موجود في نموذج المستخدم
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء جلب بيانات المستخدم:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء جلب بيانات المستخدم",
     });
   }
 });

@@ -1,9 +1,8 @@
 const express = require("express");
-const mongoose = require("mongoose"); // استيراد mongoose
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -15,25 +14,25 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// الاتصال بقاعدة البيانات باستخدام mongoose
+// الاتصال بقاعدة البيانات
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ تم الاتصال بقاعدة البيانات"))
   .catch((err) => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err));
 
-// تعريف نموذج المستخدم باستخدام mongoose
-const userSchema = new mongoose.Schema({
+// نموذج المستخدم
+const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  balance: { type: Number, default: 0 }, // إضافة حقل الرصيد
+  email: { type: String, required: true, unique: true }, // إضافة حقل الإيميل
 });
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model("User", UserSchema);
 
 // مسار التسجيل
 app.post("/register", async (req, res) => {
   const { username, password, email } = req.body;
+  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password || !email) {
     return res.status(400).json({
@@ -72,6 +71,7 @@ app.post("/register", async (req, res) => {
 // مسار تسجيل الدخول
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password) {
     return res.status(400).json({
@@ -97,12 +97,9 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
     res.status(200).json({
       success: true,
       message: "تم تسجيل الدخول بنجاح",
-      token: token,
     });
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل الدخول:", error);

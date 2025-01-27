@@ -24,7 +24,8 @@ mongoose
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true }, // إضافة حقل الإيميل
+  email: { type: String, required: true, unique: true },
+  balance: { type: Number, default: 0 }, // إضافة الرصيد
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -32,7 +33,6 @@ const User = mongoose.model("User", UserSchema);
 // مسار التسجيل
 app.post("/register", async (req, res) => {
   const { username, password, email } = req.body;
-  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password || !email) {
     return res.status(400).json({
@@ -71,7 +71,6 @@ app.post("/register", async (req, res) => {
 // مسار تسجيل الدخول
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  console.log(req.body);  // تحقق من البيانات المستلمة
 
   if (!username || !password) {
     return res.status(400).json({
@@ -106,6 +105,37 @@ app.post("/login", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "حدث خطأ أثناء تسجيل الدخول",
+    });
+  }
+});
+
+// مسار استرجاع بيانات المستخدم
+app.get("/user/:username", async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم غير موجود",
+      });
+    }
+
+    const userData = {
+      username: user.username,
+      balance: user.balance || 0, // الرصيد الافتراضي 0
+    };
+
+    res.status(200).json({
+      success: true,
+      data: userData,
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء جلب بيانات المستخدم:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء جلب بيانات المستخدم",
     });
   }
 });

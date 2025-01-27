@@ -22,10 +22,10 @@ mongoose
 
 // نموذج المستخدم
 const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
+  username: { type: String, required: true, unique: true },  // حقل username
   password: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  balance: { type: Number, default: 0 }, // إضافة الرصيد
+  balance: { type: Number, default: 0 },  // حقل balance مع قيمة افتراضية 0
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -97,13 +97,13 @@ app.post("/login", async (req, res) => {
     }
 
     res.status(200).json({
-   success: true,
-   message: "تم تسجيل الدخول بنجاح",
-   user: {
-      username: user.username,
-      balance: user.balance || 0,
-   },
-});
+      success: true,
+      message: "تم تسجيل الدخول بنجاح",
+      user: {
+        username: user.username,
+        balance: user.balance || 0,
+      },
+    });
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل الدخول:", error);
     res.status(500).json({
@@ -113,6 +113,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// مسار جلب بيانات المستخدم
 app.get("/user/:username", async (req, res) => {
     const { username } = req.params;
 

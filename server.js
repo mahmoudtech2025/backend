@@ -155,6 +155,49 @@ app.get("/getUserData", async (req, res) => {
   }
 });
 
+// مسار تعديل الرصيد
+app.post("/updateBalance", async (req, res) => {
+  const { token, amount } = req.body;
+
+  if (!token || amount === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "يرجى إدخال التوكن والمبلغ",
+    });
+  }
+
+  try {
+    // التحقق من صحة التوكن
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // العثور على المستخدم باستخدام المعرف الموجود في التوكن
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "المستخدم غير موجود",
+      });
+    }
+
+    // تعديل الرصيد
+    user.balance += amount;  // يمكن تعديل الرصيد بناءً على العملية المطلوبة (زيادة/خصم)
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `تم تحديث الرصيد بنجاح، الرصيد الجديد: ${user.balance}`,
+      balance: user.balance, // إرجاع الرصيد المعدل
+    });
+  } catch (error) {
+    console.error("❌ خطأ أثناء تحديث الرصيد:", error);
+    res.status(500).json({
+      success: false,
+      message: "حدث خطأ أثناء تحديث الرصيد",
+    });
+  }
+});
+
 // التأكد من عمل الخادم
 app.get("/", (req, res) => {
   res.send("الخادم يعمل بنجاح!");

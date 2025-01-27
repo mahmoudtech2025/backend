@@ -22,13 +22,13 @@ mongoose
 
 // نموذج المستخدم
 const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },  // حقل username
+  username: { type: String, required: true, unique: true }, // حقل username
   password: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  balance: { type: Number, default: 0 },  // حقل balance مع قيمة افتراضية 0
+  balance: { type: Number, default: 0 }, // حقل balance مع قيمة افتراضية 0
 });
 
-const User = mongoose.model("User", UserSchema);
+const Users = mongoose.model("users", UserSchema);
 
 // مسار التسجيل
 app.post("/register", async (req, res) => {
@@ -42,8 +42,8 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ username });
-    const existingEmail = await User.findOne({ email });
+    const existingUser = await Users.findOne({ username });
+    const existingEmail = await Users.findOne({ email });
     if (existingUser || existingEmail) {
       return res.status(400).json({
         success: false,
@@ -52,7 +52,7 @@ app.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword, email });
+    const newUser = new Users({ username, password: hashedPassword, email });
     await newUser.save();
 
     res.status(201).json({
@@ -80,7 +80,7 @@ app.post("/login", async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ username });
+    const user = await Users.findOne({ username });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -120,8 +120,7 @@ app.get("/user/:username", async (req, res) => {
   console.log("جلب بيانات المستخدم:", username); // طباعة اسم المستخدم
 
   try {
-    // تأكد من أن اسم المستخدم صالح وموجود
-    const user = await User.findOne({ username: username });
+    const user = await Users.findOne({ username: username });
     if (!user) {
       return res.status(404).json({
         success: false,

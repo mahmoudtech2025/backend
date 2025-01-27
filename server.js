@@ -55,9 +55,16 @@ app.post("/register", async (req, res) => {
     const newUser = new Users({ username, password: hashedPassword, email });
     await newUser.save();
 
+    // جلب بيانات المستخدم بعد التسجيل
+    const userData = {
+      username: newUser.username,
+      balance: newUser.balance || 0,
+    };
+
     res.status(201).json({
       success: true,
       message: "تم التسجيل بنجاح",
+      user: userData, // إرجاع بيانات المستخدم الجديدة
     });
   } catch (error) {
     console.error("❌ خطأ أثناء التسجيل:", error);
@@ -67,6 +74,7 @@ app.post("/register", async (req, res) => {
     });
   }
 });
+
 
 // مسار تسجيل الدخول
 app.post("/login", async (req, res) => {
@@ -96,13 +104,16 @@ app.post("/login", async (req, res) => {
       });
     }
 
+    // جلب بيانات المستخدم بعد تسجيل الدخول
+    const userData = {
+      username: user.username,
+      balance: user.balance || 0,
+    };
+
     res.status(200).json({
       success: true,
       message: "تم تسجيل الدخول بنجاح",
-      user: {
-        username: user.username,
-        balance: user.balance || 0,
-      },
+      user: userData, // إرجاع بيانات المستخدم
     });
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل الدخول:", error);

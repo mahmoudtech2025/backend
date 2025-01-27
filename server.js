@@ -120,13 +120,16 @@ app.get("/user/:username", async (req, res) => {
   console.log("جلب بيانات المستخدم:", username); // طباعة اسم المستخدم
 
   try {
-    const user = await Users.findOne({ username: username });
+    const user = await Users.findOne({ username: new RegExp("^" + username + "$", "i") });  // البحث غير حساس للحروف
     if (!user) {
+      console.log("المستخدم غير موجود");
       return res.status(404).json({
         success: false,
         message: "المستخدم غير موجود",
       });
     }
+
+    console.log("تم العثور على المستخدم:", user);  // سجل البيانات
 
     const userData = {
       username: user.username,

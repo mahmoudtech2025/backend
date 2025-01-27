@@ -97,9 +97,13 @@ app.post("/login", async (req, res) => {
     }
 
     res.status(200).json({
-      success: true,
-      message: "تم تسجيل الدخول بنجاح",
-    });
+   success: true,
+   message: "تم تسجيل الدخول بنجاح",
+   user: {
+      username: user.username,
+      balance: user.balance || 0,
+   },
+});
   } catch (error) {
     console.error("❌ خطأ أثناء تسجيل الدخول:", error);
     res.status(500).json({

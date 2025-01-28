@@ -126,39 +126,34 @@ app.post("/login", async (req, res) => {
 
 // مسار جلب بيانات المستخدم
 app.get("/user/:username", async (req, res) => {
-  const { username } = req.params;
+       const { username } = req.params;
 
-  console.log("جلب بيانات المستخدم:", username); // طباعة اسم المستخدم
+       try {
+         const user = await Users.findOne({ username: new RegExp("^" + username + "$", "i") });
+         if (!user) {
+           return res.status(404).json({
+             success: false,
+             message: "المستخدم غير موجود",
+           });
+         }
 
-  try {
-    const user = await Users.findOne({ username: new RegExp("^" + username + "$", "i") });  // البحث غير حساس للحروف
-    if (!user) {
-      console.log("المستخدم غير موجود");
-      return res.status(404).json({
-        success: false,
-        message: "المستخدم غير موجود",
-      });
-    }
+         const userData = {
+           username: user.username,
+           balance: user.balance || 0,
+         };
 
-    console.log("تم العثور على المستخدم:", user);  // سجل البيانات
-
-    const userData = {
-      username: user.username,
-      balance: user.balance || 0, // الرصيد الافتراضي 0
-    };
-
-    res.status(200).json({
-      success: true,
-      data: userData,
-    });
-  } catch (error) {
-    console.error("❌ خطأ أثناء جلب بيانات المستخدم:", error);
-    res.status(500).json({
-      success: false,
-      message: "حدث خطأ أثناء جلب بيانات المستخدم",
-    });
-  }
-});
+         res.status(200).json({
+           success: true,
+           data: userData,
+         });
+       } catch (error) {
+         console.error("❌ خطأ أثناء جلب بيانات المستخدم:", error);
+         res.status(500).json({
+           success: false,
+           message: "حدث خطأ أثناء جلب بيانات المستخدم",
+         });
+       }
+     });
 
 // التأكد من عمل الخادم
 app.get("/", (req, res) => {
